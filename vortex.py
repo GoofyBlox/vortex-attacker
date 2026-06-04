@@ -8,16 +8,19 @@ import random
 import time
 import os
 import json
+import sys
 from datetime import datetime
 
 VERSION = "8.0"
 
-# Colors
+# Colors - DEFINED CORRECTLY
 GREEN = "\033[92m"
 RED = "\033[91m"
 YELLOW = "\033[93m"
 BLUE = "\033[94m"
+PURPLE = "\033[95m"
 CYAN = "\033[96m"
+WHITE = "\033[97m"
 RESET = "\033[0m"
 BOLD = "\033[1m"
 
@@ -362,9 +365,11 @@ def website_attack():
         method_name = "HTTP_FLOOD"
         # Convert to HTTP if HTTPS given
         url = url.replace("https://", "http://")
+        port = 80
     elif method_choice == "2":
         attack_func = website_https_flood
         method_name = "HTTPS_FLOOD"
+        port = 443
     else:
         attack_func = slowloris_attack
         method_name = "SLOWLORIS"
@@ -423,7 +428,7 @@ def website_attack():
         save_log({
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "target": url,
-            "port": 443 if method_choice == "2" else 80,
+            "port": port,
             "method": method_name,
             "threads": threads,
             "duration": duration,
