@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Vortex DDoS Tool - Fixed Menu UI
+# Vortex DDoS Tool - Main Menu System
 
 import sys
 import os
@@ -27,40 +27,33 @@ WHITE = "\033[97m"
 BOLD = "\033[1m"
 RESET = "\033[0m"
 
-def clear():
+def clear_screen():
     os.system('clear')
 
 def banner():
     print(f"{CYAN}{BOLD}")
     print("╔════════════════════════════════════════════════════════════════════════════╗")
     print("║                                                                            ║")
-    print(f"║     {RED}██╗   ██╗ ██████╗ ██████╗ ████████╗███████╗██╗  ██╗{CYAN}              ║")
-    print(f"║     {RED}██║   ██║██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝╚██╗██╔╝{CYAN}              ║")
-    print(f"║     {RED}██║   ██║██║   ██║██████╔╝   ██║   █████╗   ╚███╔╝{CYAN}               ║")
-    print(f"║     {RED}╚██╗ ██╔╝██║   ██║██╔══██╗   ██║   ██╔══╝   ██╔██╗{CYAN}               ║")
-    print(f"║     {RED} ╚████╔╝ ╚██████╔╝██║  ██║   ██║   ███████╗██╔╝ ██╗{CYAN}              ║")
-    print(f"║     {RED}  ╚═══╝   ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝{CYAN}              ║")
-    print("║                                                                            ║")
-    print(f"║                 {YELLOW}🔥 DDoS TOOL v13.0 - ULTIMATE EDITION 🔥{CYAN}                 ║")
-    print(f"║               {GREEN}⚡ Minecraft | Website | TCP | UDP | Amplification ⚡{CYAN}        ║")
+    print(f"║                         {RED}VORTEX DDOS TOOL v13.0{CYAN}                             ║")
+    print(f"║                   {YELLOW}Minecraft | Website | TCP | UDP | Amplification{CYAN}            ║")
     print("║                                                                            ║")
     print("╚════════════════════════════════════════════════════════════════════════════╝")
     print(f"{RESET}")
 
 def menu():
     print(f"{CYAN}╔════════════════════════════════════════════════════════════════════════════╗{RESET}")
-    print(f"{CYAN}║                         {BOLD}{WHITE}🔧 ATTACK MENU 🔧{CYAN}                          ║{RESET}")
+    print(f"{CYAN}║                         {BOLD}{WHITE}ATTACK MENU{CYAN}                                    ║{RESET}")
     print(f"{CYAN}╠════════════════════════════════════════════════════════════════════════════╣{RESET}")
-    print(f"{CYAN}║  {GREEN}[1]{RESET}  MINECRAFT Java Server      {DIM}Attack Java Edition servers{RESET}                              {CYAN}║{RESET}")
-    print(f"{CYAN}║  {GREEN}[2]{RESET}  MINECRAFT Bedrock Server   {DIM}Attack Bedrock Edition servers{RESET}                           {CYAN}║{RESET}")
-    print(f"{CYAN}║  {GREEN}[3]{RESET}  WEBSITE DDoS               {DIM}HTTP/HTTPS flood with Cloudflare bypass{RESET}                  {CYAN}║{RESET}")
-    print(f"{CYAN}║  {YELLOW}[4]{RESET}  TCP FLOOD                  {DIM}Generic TCP connection flood{RESET}                             {CYAN}║{RESET}")
-    print(f"{CYAN}║  {YELLOW}[5]{RESET}  UDP FLOOD                  {DIM}Generic UDP packet flood{RESET}                                 {CYAN}║{RESET}")
-    print(f"{CYAN}║  {YELLOW}[6]{RESET}  AMPLIFICATION              {DIM}DNS/NTP amplification (50-500x multiplier){RESET}               {CYAN}║{RESET}")
-    print(f"{CYAN}║  {YELLOW}[7]{RESET}  SLOWLORIS                  {DIM}Slowloris - keep connections open{RESET}                        {CYAN}║{RESET}")
-    print(f"{CYAN}║  {BLUE}[8]{RESET}  VIEW LOGS                  {DIM}View attack history and statistics{RESET}                       {CYAN}║{RESET}")
-    print(f"{CYAN}║  {BLUE}[9]{RESET}  CLEAR LOGS                 {DIM}Delete all attack logs{RESET}                                    {CYAN}║{RESET}")
-    print(f"{CYAN}║  {RED}[0]{RESET}  EXIT                       {DIM}Exit the tool{RESET}                                             {CYAN}║{RESET}")
+    print(f"{CYAN}║  {GREEN}[1]{RESET}  MINECRAFT Java Server                                    {CYAN}║{RESET}")
+    print(f"{CYAN}║  {GREEN}[2]{RESET}  MINECRAFT Bedrock Server                                 {CYAN}║{RESET}")
+    print(f"{CYAN}║  {GREEN}[3]{RESET}  WEBSITE DDoS (Cloudflare Bypass)                         {CYAN}║{RESET}")
+    print(f"{CYAN}║  {YELLOW}[4]{RESET}  TCP FLOOD                                              {CYAN}║{RESET}")
+    print(f"{CYAN}║  {YELLOW}[5]{RESET}  UDP FLOOD                                              {CYAN}║{RESET}")
+    print(f"{CYAN}║  {YELLOW}[6]{RESET}  AMPLIFICATION (DNS/NTP)                                 {CYAN}║{RESET}")
+    print(f"{CYAN}║  {YELLOW}[7]{RESET}  SLOWLORIS                                              {CYAN}║{RESET}")
+    print(f"{CYAN}║  {BLUE}[8]{RESET}  VIEW ATTACK LOGS                                        {CYAN}║{RESET}")
+    print(f"{CYAN}║  {BLUE}[9]{RESET}  CLEAR LOGS                                              {CYAN}║{RESET}")
+    print(f"{CYAN}║  {RED}[0]{RESET}  EXIT                                                    {CYAN}║{RESET}")
     print(f"{CYAN}╚════════════════════════════════════════════════════════════════════════════╝{RESET}")
 
 def footer():
@@ -72,61 +65,53 @@ def footer():
     if system == "Android":
         system = "Termux"
     
-    print(f"\n{DIM}┌────────────────────────────────────────────────────────────────────────────────┐{RESET}")
-    print(f"{DIM}│  🕐 {now}  │  💻 {system}  │  🐍 Python {platform.python_version()}  │  🔥 Vortex DDoS v13.0  │{RESET}")
-    print(f"{DIM}└────────────────────────────────────────────────────────────────────────────────┘{RESET}")
-
-def loading(text):
-    chars = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-    for char in chars:
-        sys.stdout.write(f"\r{char} {text}")
-        sys.stdout.flush()
-        time.sleep(0.05)
-    sys.stdout.write(f"\r✓ {text}     \n")
+    print(f"\n┌────────────────────────────────────────────────────────────────────────────────┐")
+    print(f"│  🕐 {now}  │  💻 {system}  │  🐍 Python {platform.python_version()}  │  🔥 Vortex DDoS v13.0  │")
+    print(f"└────────────────────────────────────────────────────────────────────────────────┘")
 
 def main_menu():
     while True:
-        clear()
+        clear_screen()
         banner()
         menu()
         footer()
         
-        choice = input(f"\n{BOLD}{YELLOW}🎯 ENTER YOUR CHOICE: {RESET}")
+        choice = input(f"\n{BOLD}{YELLOW}ENTER YOUR CHOICE: {RESET}")
         
         if choice == "1":
-            loading("Loading Minecraft Java Attack...")
+            print(f"{GREEN}[+] Loading Minecraft Java Attack...{RESET}")
             minecraft_attack("java")
         elif choice == "2":
-            loading("Loading Minecraft Bedrock Attack...")
+            print(f"{GREEN}[+] Loading Minecraft Bedrock Attack...{RESET}")
             minecraft_attack("bedrock")
         elif choice == "3":
-            loading("Loading Website DDoS with Cloudflare Bypass...")
+            print(f"{GREEN}[+] Loading Website DDoS with Cloudflare Bypass...{RESET}")
             website_attack()
         elif choice == "4":
-            loading("Loading TCP Flood...")
+            print(f"{GREEN}[+] Loading TCP Flood...{RESET}")
             tcp_attack()
         elif choice == "5":
-            loading("Loading UDP Flood...")
+            print(f"{GREEN}[+] Loading UDP Flood...{RESET}")
             udp_attack()
         elif choice == "6":
-            loading("Loading Amplification Attack...")
+            print(f"{GREEN}[+] Loading Amplification Attack...{RESET}")
             amp_attack()
         elif choice == "7":
-            loading("Loading Slowloris...")
+            print(f"{GREEN}[+] Loading Slowloris...{RESET}")
             slowloris()
         elif choice == "8":
-            loading("Loading Attack Logs...")
+            print(f"{GREEN}[+] Loading Attack Logs...{RESET}")
             view_logs()
         elif choice == "9":
-            loading("Clearing Logs...")
+            print(f"{GREEN}[+] Clearing Logs...{RESET}")
             clear_logs()
         elif choice == "0":
-            print(f"\n{YELLOW}🔥 Shutting down Vortex DDoS Tool...{RESET}")
+            print(f"\n{YELLOW}[!] Shutting down Vortex DDoS Tool...{RESET}")
             time.sleep(1)
-            print(f"{GREEN}✓ Goodbye!{RESET}\n")
+            print(f"{GREEN}[+] Goodbye!{RESET}\n")
             sys.exit(0)
         else:
-            print(f"\n{RED}❌ Invalid choice! Please select 0-9{RESET}")
+            print(f"\n{RED}[!] Invalid choice! Please select 0-9{RESET}")
             time.sleep(1)
 
 if __name__ == "__main__":
