@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import socket
-import time
 
 # Colors
 GREEN = "\033[92m"
@@ -44,14 +43,3 @@ def check_port(ip, port):
         return True
     except:
         return False
-
-def loading(text, duration=0.5):
-    chars = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-    end_time = time.time() + duration
-    i = 0
-    while time.time() < end_time:
-        sys.stdout.write(f"\r{chars[i % len(chars)]} {text}")
-        sys.stdout.flush()
-        time.sleep(0.05)
-        i += 1
-    sys.stdout.write(f"\r✓ {text}     \n")
