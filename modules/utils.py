@@ -1,35 +1,38 @@
+#!/usr/bin/env python3
 import os
 import socket
+import time
 
+# Colors
 GREEN = "\033[92m"
 RED = "\033[91m"
 YELLOW = "\033[93m"
 BLUE = "\033[94m"
+PURPLE = "\033[95m"
 CYAN = "\033[96m"
-RESET = "\033[0m"
+WHITE = "\033[97m"
 BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
 
 def clear():
     os.system('clear')
 
 def pcolor(color, text):
-    colors = {"g": GREEN, "r": RED, "y": YELLOW, "b": BLUE, "c": CYAN}
-    print(colors.get(color, GREEN) + text + RESET)
-
-def banner():
-    print(BOLD + CYAN + """
-╔═══════════════════════════════════════════════════════════╗
-║     VORTEX DDOS TOOL v13.0 - READY FOR ACTION            ║
-╚═══════════════════════════════════════════════════════════╝
-""" + RESET)
+    colors = {
+        "g": GREEN, "r": RED, "y": YELLOW, 
+        "b": BLUE, "p": PURPLE, "c": CYAN,
+        "w": WHITE, "bold": BOLD, "dim": DIM
+    }
+    print(colors.get(color, GREEN) + str(text) + RESET)
 
 def resolve(domain):
     try:
         ip = socket.gethostbyname(domain)
-        pcolor("g", f"[+] {domain} -> {ip}")
+        pcolor("g", f"[✓] {domain} → {ip}")
         return ip
     except:
-        pcolor("r", f"[-] Cannot resolve {domain}")
+        pcolor("r", f"[✗] Cannot resolve {domain}")
         return None
 
 def check_port(ip, port):
@@ -41,3 +44,14 @@ def check_port(ip, port):
         return True
     except:
         return False
+
+def loading(text, duration=0.5):
+    chars = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+    end_time = time.time() + duration
+    i = 0
+    while time.time() < end_time:
+        sys.stdout.write(f"\r{chars[i % len(chars)]} {text}")
+        sys.stdout.flush()
+        time.sleep(0.05)
+        i += 1
+    sys.stdout.write(f"\r✓ {text}     \n")
