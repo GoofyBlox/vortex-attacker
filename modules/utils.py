@@ -11,7 +11,6 @@ PURPLE = "\033[95m"
 CYAN = "\033[96m"
 WHITE = "\033[97m"
 BOLD = "\033[1m"
-DIM = "\033[2m"
 RESET = "\033[0m"
 
 def clear():
@@ -21,7 +20,7 @@ def pcolor(color, text):
     colors = {
         "g": GREEN, "r": RED, "y": YELLOW, 
         "b": BLUE, "p": PURPLE, "c": CYAN,
-        "w": WHITE, "bold": BOLD, "dim": DIM
+        "w": WHITE, "bold": BOLD
     }
     print(colors.get(color, GREEN) + str(text) + RESET)
 
